@@ -1,1 +1,3 @@
-# Individual_variation_and_tipping_points
+# Repository of codes and analysis scripts for reproducing the results of the paper
+
+
