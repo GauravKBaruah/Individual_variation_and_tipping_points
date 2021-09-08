@@ -1,9 +1,13 @@
-#rm(list=ls())
-
+#code for Ecology Letters paper: 
+#" The impact of individual variation on abrupt collapses in mutualistic networks" 2021. Gaurav Baruah
+#email: gbaruahecoevo@gmail.com
 require(statmod)
+
 cutoff <- function(x) ifelse(x<1, (1*(x>0))*(x*x*x*(10+x*(-15+6*x))), 1)
 
 
+
+#conversion to a matrix
 adj.mat<-function(data){
   #dat <- paste('network.csv',sep='')
   d <- read.csv(file=data,header=FALSE )
@@ -37,7 +41,7 @@ gausquad.animals<-function(m,sigma,w,h,np,na,mut.strength,points,mat,degree.anim
 }
   else if(mat == 1){
   #nodes oir points in the abscissa where the integral will be evaluated numerically
-    if(interaction_type == "trade_off"){
+  if(interaction_type == "trade_off"){
   z1<-gauss.quad.prob(points, dist = "normal", mu=m$ma, sigma =sigma$sa)$nodes #z'
   z2<-gauss.quad.prob(points, dist = "normal", mu=m$mp, sigma =sigma$sp)$nodes #z''
   
@@ -493,7 +497,6 @@ grid_arrange_shared_legend <- function(..., ncol, nrow, position = c("bottom", "
 # sigma: variance of traits
 # moment: mean
 # limits: limits of the mean trait axis which in the study are -1,1
-# code adapted from Barabas & D'Andrea 2016 Eco. Letts.
 
 plot_snapshot <- function(Na, Np, m, sigma, moment=0, limits=c(-1, 1), res=1001) {
   Sa <- length(Na) ## number of species
@@ -615,6 +618,8 @@ mat.comp<-function(matrix){
   out<-return(list(Amatrix=Amatrix,Pmatrix=Pmatrix))
   
 }
+
+
 # function for sampling competitive coefficients from exponential distribution 
 # competitive interactions  were scaled by the total number of species within a guild as Dakos & Bascompte 2014 PNAS.
 # matrix: network of interactions which are 0 or 1. 
@@ -651,3 +656,35 @@ mat.comp_feasibility<-function(matrix,strength){
   out<-return(list(Amatrix=Amatrix,Pmatrix=Pmatrix))
   
 }
+
+
+#plot for feasibility analysis that takes data frame as input
+feasibility_plot<-function(dat){
+  akima.R<-with(dat,interp(dat$Strength_mutualism,log(dat$range_competition),dat$mean_feasibility,
+                           xo=seq(min(dat$Strength_mutualism),max(dat$Strength_mutualism),length=20), 
+                           yo=seq(min(log(dat$range_competition)),max(log(dat$range_competition)), length=20)))
+  
+  gdat1<-interp2xyz(akima.R, data.frame=TRUE)
+  colnames(gdat1)<-c("mutualism_strength","range_competition","Feasibility")
+  a<-ggplot(gdat1 , aes(x=mutualism_strength,y=range_competition,
+                        z=Feasibility))+
+    geom_raster(aes(fill=Feasibility),show.legend =T)+ 
+    #geom_contour(aes(colour = ..level..),bins=1)+
+    theme_cowplot()+
+    theme(legend.title = element_text(size = 9, face = "bold"), 
+          legend.text=element_text(size=rel(0.5)),
+          legend.position = "bottom", panel.background = element_blank(), 
+          axis.text = element_text(colour = "black", size = 9, face = "bold"), 
+          axis.title = element_text(size = 9, face = "bold"), 
+          legend.key = element_blank())+
+    scale_fill_continuous(low = "#BFE1B0", high = "#137177") +
+    labs(x = expression(paste("Mutualistic strength, ",gamma[0])),
+         y = expression(paste(log(rho)))) +
+    scale_x_continuous(expand=c(0,0)) +scale_y_continuous(expand=c(0,0))
+  
+  a
+  
+  
+  return(a)
+}
+

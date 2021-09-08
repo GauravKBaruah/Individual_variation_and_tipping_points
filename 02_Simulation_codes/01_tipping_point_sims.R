@@ -1,5 +1,10 @@
+#code for Ecology Letters paper: 
+#" The impact of individual variation on abrupt collapses in mutualistic networks" 2021. Gaurav Baruah
+#email: gbaruahecoevo@gmail.com
+
+
 rm(list=ls())
-source('~/tipping_point_code1.1.R', echo=F)#converting mutualism matrix to ones and zeros
+source('~/02_functions_tipping_point.R', echo=F)#converting mutualism matrix to ones and zeros
 require(deSolve) ## for integrating ordinary differential equations
 require(tidyverse) ## for efficient data manipulation & plotting
 require(cowplot) ## for arranging plots in a grid
@@ -13,7 +18,7 @@ theme_set(theme_classic())
 
 # reading all the datasets
 # calculating nestedness and connectance
-mydir = '~/Dropbox/EAWAG PostDoc/Individual_variation_and_tipping_points/01_Data/Network data/' #path to the directory where all the network .csv files are located
+mydir = '~/Network data/' #path to the directory where all the network .csv files are located
 myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
 
 newfiles<-myfiles[1:101]
@@ -35,7 +40,7 @@ set.seed(1234)
 model.t<-list()
 new_ddf<-NULL
 new_gamma_df<-NULL
-mut.strength <- seq(0,3,0.15)
+mut.strength <- seq(0,7,0.15)
 for(r in 1:nrow(fact)){
   #print(r)
   
@@ -62,7 +67,7 @@ for(r in 1:nrow(fact)){
   
   
   #heritabilities
-  h2<-runif((Aspecies+Plantspecies),0.2,0.2)
+  h2<-runif((Aspecies+Plantspecies),0.4,0.4)
   
   ## initial species densities
   N <- runif( (Aspecies+Plantspecies) , 1,1)  
@@ -110,7 +115,7 @@ for(r in 1:nrow(fact)){
   
   
   
-   start.time =1000
+   start.time =5000
    model.t<-lapply(1, Mcommunity_1,time=start.time,state=ic,
                                pars=params)
   

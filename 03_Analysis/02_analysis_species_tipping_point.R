@@ -1,5 +1,5 @@
 rm(list=ls())
-source('~/tipping_point_code1.1.R')
+source('~/02_functions_tipping_point.R')
 require(deSolve) ## for integrating ordinary differential equations
 require(tidyverse) ## for efficient data manipulation & plotting
 require(cowplot) ## for arranging plots in a grid
@@ -41,7 +41,6 @@ min(data_species$No.species)
 
 
 # all the data types
-
 
 #load("01_species_level_tipping_point_trade_off_competition_exp_distribution.RData")
 load("01_species_level_tipping_point_trade_off_no_trade_off_no_noise_1.RData") #original data

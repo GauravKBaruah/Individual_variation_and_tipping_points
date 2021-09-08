@@ -1,5 +1,11 @@
+#code for Ecology Letters paper: 
+#" The impact of individual variation on abrupt collapses in mutualistic networks" 2021. Gaurav Baruah
+#email: gbaruahecoevo@gmail.com
+
+
+
 rm(list=ls())
-source('~/tipping_point_code1.1.R', echo=F)#converting mutualism matrix to ones and zeros
+source('~/02_functions_tipping_point.R', echo=F)#converting mutualism matrix to ones and zeros
 require(deSolve) ## for integrating ordinary differential equations
 require(tidyverse) ## for efficient data manipulation & plotting
 require(cowplot) ## for arranging plots in a grid
@@ -20,21 +26,23 @@ library(bipartite)
 #five mutualistic networks :60, 34, 8
 #nestedness: 0.635, 0.246, 0
 
-newfiles <-c("plant_pollinator/M_PL_046.csv","plant_pollinator/M_PL_061_33.csv", "plant_pollinator/M_PL_061_18.csv")
+newfiles <-c("plant_pollinator/M_PL_046.csv",
+             "plant_pollinator/M_PL_061_33.csv", 
+             "plant_pollinator/M_PL_061_18.csv")
 
 mydir = 'plant_pollinator'
 myfiles = list.files(path=mydir, pattern="*.csv", full.names=TRUE)
 #myfiles<-myfile
-myfiles<-myfiles[1:101]
+#myfiles<-myfiles[1:101]
 
 
-fact<- expand.grid(`Strength_mutualism`=seq(0,6.5,0.4), 
+fact<- expand.grid(`Strength_mutualism`=seq(0,7.5,0.4), 
                    `web` =newfiles,
                    `interaction_type`= "trade_off",
                    `noise`="none",
                    `individual.variation` = c("high","low"),
                    `range_competition` = c(50,70,100,200,500,
-                                           700,1000,2000,5000,7000),
+                                           700,1000,2000,5000,7000,10000),
                    `random_seed`=4327+(1:30)*100) %>%
   as_tibble %>%
   mutate(feasibility = 0,
@@ -45,10 +53,12 @@ fact<- expand.grid(`Strength_mutualism`=seq(0,6.5,0.4),
 
 model.t<-list()
 
+
+
 for(r in 1:nrow(fact)){
   #print(r)
   
-  
+  # extracting the interaction matrix
   g<-adj.mat(myfiles[which(myfiles == fact$web[r])]) #network web names
   # g<-g[-1,-1] 
   
@@ -70,24 +80,29 @@ for(r in 1:nrow(fact)){
       sig <-runif((Aspecies+Plantspecies),0.05,0.5)}
   
   
-  
+  #heritability used in the model
   h2<-runif((Aspecies+Plantspecies),0.4,0.4)
   
   ## vector of species trait standard deviations
   N <- runif( (Aspecies+Plantspecies) , 1,1)  ## initial species densities
   nainit<- N[1:Aspecies]
   npinit<-N[(Aspecies+1): (Aspecies+Plantspecies)]
+  
+  #vector of mean phenotypic values sampled from a uniform distribution
   muinit <-runif((Aspecies+Plantspecies), -1,1)
   mainit<-muinit[1:Aspecies]
   mpinit<-muinit[(Aspecies+1): (Aspecies+Plantspecies)]
   
+  #matrix of coefficients for competition
   Amatrix<-mat.comp_feasibility(g,strength=fact$range_competition[r])$Amatrix
   Pmatrix<-mat.comp_feasibility(g,strength=fact$range_competition[r])$Pmatrix
-  gamma=0.5#fact_lessvar$Strength_mutualism[r]
+  gamma=0.5
   mut.strength<-fact$Strength_mutualism[r]
   nestedness<-nestedness_NODF(g)
   C<-Connectance(g)
   web.name<-myfiles[r]
+  
+  #growth rates of species
   ba<-runif(Aspecies, -0.05,-0.05)
   bp<-runif(Plantspecies,-0.05,-0.05)
   dganimals<-degree.animals
@@ -106,11 +121,11 @@ for(r in 1:nrow(fact)){
   
   
   
-  start.time = 2000
+  start.time = 3000
   model.t<-lapply(1, Mcommunity,time=start.time,state=ic,
                   pars=params)
   
-  abvector<-c(model.t[[1]]$Plants[1200,],model.t[[1]]$Animals[2000,])
+  abvector<-c(model.t[[1]]$Plants[3000,],model.t[[1]]$Animals[3000,])
   percent_survived<-length(which(abvector > 0.001))/length(abvector)
   
   
@@ -121,40 +136,12 @@ for(r in 1:nrow(fact)){
   
   
 }
-
-#save(fact, file="Feasibility_data_12JUL_.RData")
-#load("Feasibility_data_12JUL.RData")
+#save(fact, file="Feasibility_data.RData")
 
 
-feasibility_plot<-function(dat){
-  akima.R<-with(dat,interp(dat$Strength_mutualism,log(dat$range_competition),dat$mean_feasibility,
-                           xo=seq(min(dat$Strength_mutualism),max(dat$Strength_mutualism),length=20), 
-                           yo=seq(min(log(dat$range_competition)),max(log(dat$range_competition)), length=20)))
-  
-  gdat1<-interp2xyz(akima.R, data.frame=TRUE)
-  colnames(gdat1)<-c("mutualism_strength","range_competition","Feasibility")
-  a<-ggplot(gdat1 , aes(x=mutualism_strength,y=range_competition,
-                        z=Feasibility))+
-    geom_raster(aes(fill=Feasibility),show.legend =T)+ 
-   #geom_contour(aes(colour = ..level..),bins=1)+
-    theme_cowplot()+
-    theme(legend.title = element_text(size = 9, face = "bold"), 
-          legend.text=element_text(size=rel(0.5)),
-          legend.position = "bottom", panel.background = element_blank(), 
-          axis.text = element_text(colour = "black", size = 9, face = "bold"), 
-          axis.title = element_text(size = 9, face = "bold"), 
-          legend.key = element_blank())+
-    scale_fill_continuous(low = "#BFE1B0", high = "#137177") +
-    labs(x = expression(paste("Mutualistic strength, ",gamma[0])),
-         y = expression(paste(log(rho)))) +
-    scale_x_continuous(expand=c(0,0)) +scale_y_continuous(expand=c(0,0))
-  
-  a
- 
-  
-  return(a)
-}
+# plot and aanalyis for the feasibility data
 
+#load("Feasibility_data.RData")
 
 
 for(i in 1:nrow(fact)){
