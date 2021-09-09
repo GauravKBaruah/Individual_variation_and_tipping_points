@@ -1,6 +1,8 @@
 # Repository for the paper: 
 
-**"The impact of individual variation on abrupt collapses in mutualistic networks"** 2021. Gaurav Baruah. Ecology Letters.
+**"The impact of individual variation on abrupt collapses in mutualistic networks"** 2021.Ecology Letters.
+**Author: Gaurav Baruah**
+**Affiliations: Swiss Federal Institute of Aquatic Sciences, EAWAG, CH**
 
 Contact: gbaruahecoevo@gmail.com 
 
